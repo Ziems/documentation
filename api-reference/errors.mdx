@@ -1,0 +1,37 @@
+---
+title: "Errors"
+description: "Status codes the API returns and what they mean."
+---
+
+Errors are JSON with a `detail` field, in FastAPI's standard shape.
+
+| Status | Meaning | Common causes |
+|---|---|---|
+| `422` | The request is invalid | No `outputs`; a `choice` with no `options`; an unknown output `type`; a field name that isn't an identifier; a name used as both an input and an output; feedback with neither `feedback` nor `metric` |
+| `404` | Unknown prediction | The id in `/predictions/{id}` or `/predictions/{id}/feedback` doesn't exist |
+| `502` | The prediction failed | The model call failed (a missing API key, a rate limit, an outage), or the model's answer couldn't be converted to the requested types |
+
+For `422`, `detail` is a list of validation errors that point at the offending field:
+
+```json
+{
+  "detail": [
+    {
+      "type": "value_error",
+      "loc": ["body"],
+      "msg": "Value error, names used as both input and output: ['ticket']",
+      "input": {"state": {"ticket": "..."}, "outputs": {"ticket": {"type": "text"}}}
+    }
+  ]
+}
+```
+
+For `502`, `detail` is a string with the upstream error message:
+
+```json
+{"detail": "prediction failed: ..."}
+```
+
+<Note>
+  A `502` means the prediction failed upstream (for example, at the model provider), not that your request was wrong. Nothing is stored for a failed prediction, so it's safe to retry.
+</Note>

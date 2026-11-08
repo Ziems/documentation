@@ -1,0 +1,82 @@
+---
+title: "Python SDK"
+description: "A small synchronous client for the tracehill API."
+---
+
+```bash
+pip install tracehill
+```
+
+The SDK depends only on `httpx` and `pydantic`. Every argument except an id must be passed by name, so each call shows which value is which.
+
+## Client
+
+```python
+import tracehill as th
+
+client = th.Client()  # reads TRACEHILL_URL
+```
+
+<ParamField path="base_url" type="str">
+  The URL of the tracehill API you're calling. If you leave it out, the client uses the `TRACEHILL_URL` environment variable, and then `http://localhost:8000`.
+</ParamField>
+<ParamField path="timeout" type="float" default="120.0">
+  Request timeout in seconds. Predictions wait on a model call, so keep this generous.
+</ParamField>
+<ParamField path="http" type="httpx.Client">
+  Bring your own `httpx.Client`, for custom headers, proxies, retries or tests. When it's set, `base_url` and `timeout` are ignored.
+</ParamField>
+
+`Client` also works as a context manager (`with th.Client() as client: ...`), which closes the connection pool on exit.
+
+## predict
+
+```python
+result = client.predict(
+    state={"ticket": "My card was charged twice"},
+    outputs={"category": th.Choice(["billing", "bug", "other"]), "urgent": th.Bool()},
+    instructions="Triage support tickets.",
+)
+```
+
+<ParamField path="state" type="Any" required>
+  The input. See [Describing tasks](/concepts/tasks).
+</ParamField>
+<ParamField path="outputs" type="dict[str, OutputSpec | dict]" required>
+  The outputs to produce, as `th.Text()`, `th.Choice([...])` and so on, or as plain dicts. See [Output types](/concepts/output-types).
+</ParamField>
+<ParamField path="instructions" type="str | None">
+  What the task is.
+</ParamField>
+
+It returns a `Result`:
+
+<ResponseField name="id" type="str">The prediction id.</ResponseField>
+<ResponseField name="signature_id" type="str">The id of the task's shape. See [Signature ids](/concepts/tasks#signature-ids).</ResponseField>
+<ResponseField name="outputs" type="dict[str, Any]">The typed outputs. `result["name"]` is shorthand for `result.outputs["name"]`.</ResponseField>
+
+## result.feedback
+
+```python
+result.feedback(feedback="Reply was too formal", metric=0.4)
+```
+
+This attaches feedback to the prediction behind `result`. At least one of `feedback` and `metric` is required, and you can call it as many times as you like. It returns a `th.Feedback` with `id`, `feedback`, `metric` and `created_at`.
+
+<Note>
+  `result.feedback` sends through the client that made the prediction. If you use `with th.Client() as client:`, send feedback before the block ends.
+</Note>
+
+## Errors
+
+Any HTTP error raises `th.TracehillError`:
+
+```python
+try:
+    client.predict(state="hi", outputs={})
+except th.TracehillError as e:
+    e.status_code  # 422
+    e.detail       # what was wrong with the request
+```
+
+See [Errors](/api-reference/errors) for what each status means.

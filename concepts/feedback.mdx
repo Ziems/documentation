@@ -1,0 +1,47 @@
+---
+title: "Feedback"
+description: "Tell tracehill how a prediction worked out, and it learns from it."
+---
+
+After a prediction, you often learn whether it was right only later: a user edits the reply, a ticket is reassigned, a test passes. Feedback records that against the prediction that produced it, and tracehill learns from it.
+
+<ParamField body="feedback" type="string">
+  What happened, in natural language, such as "Reassigned to the bug team" or "Reply was sent unchanged".
+</ParamField>
+
+<ParamField body="metric" type="number">
+  A score for the prediction. The scale is up to you; 0–1 is a sensible convention, with 1 meaning fully correct.
+</ParamField>
+
+Both fields are optional, but every feedback entry needs at least one of them.
+
+<CodeGroup>
+```python Python
+result.feedback(feedback="Reassigned to the bug team", metric=0.0)
+```
+
+```bash curl
+curl -s $TRACEHILL_URL/predictions/pred_01KA3Q7Z8M2N4P6R8T0V2X4Z6B/feedback \
+  -H 'content-type: application/json' \
+  -d '{"feedback": "Reassigned to the bug team", "metric": 0.0}'
+```
+</CodeGroup>
+
+## Several entries per prediction
+
+Outcomes often arrive in stages, so a prediction can collect any number of feedback entries:
+
+```python
+result.feedback(feedback="Reply sent unchanged")
+result.feedback(feedback="Customer replied 'thanks!'", metric=1.0)
+```
+
+## How tracehill learns
+
+Feedback is grouped by [`signature_id`](/concepts/tasks#signature-ids), so everything you send about one task improves that task. As feedback arrives, tracehill optimizes the task in real time: it refines the task's instructions from your notes and learns from the runs that scored well. The next call of the same task uses what it learned. There's nothing to retrain or redeploy.
+
+A few habits make the learning faster:
+
+- **Send feedback for real outcomes**, such as a user edit, a reassignment, a test result or a customer reply.
+- **Use both fields when you can.** A metric says how good a run was, and a note says why.
+- **Keep the task stable.** Changing its instructions, input names or outputs starts a new `signature_id`, and tracehill starts learning again from scratch.

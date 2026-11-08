@@ -1,0 +1,53 @@
+---
+title: "Describing tasks"
+description: "How state, outputs and instructions describe a task."
+---
+
+Every prediction request describes a complete task. Nothing needs to be registered first.
+
+```json
+{
+  "instructions": "Triage support tickets.",
+  "state": {"ticket": "My card was charged twice", "plan": "pro"},
+  "outputs": {
+    "category": {"type": "choice", "options": {"billing": null, "bug": null, "other": null}},
+    "urgent": {"type": "bool", "instructions": "Needs a reply today?"}
+  }
+}
+```
+
+<ParamField body="state" type="any" required>
+  The input. The task reads it but doesn't produce it.
+
+  - **An object** gives one input field per key. Above, that's `ticket` and `plan`. String values are passed as text, and other values (numbers, lists, nested objects) are rendered as JSON.
+  - **Any other value**, such as a string or a list, becomes a single input field named `state`.
+</ParamField>
+
+<ParamField body="outputs" type="object" required>
+  The fields to produce, by name. Each value is an [output spec](/concepts/output-types) with a `type` and optional `instructions`. At least one output is required.
+</ParamField>
+
+<ParamField body="instructions" type="string">
+  What the task is, in plain language. The model sees it alongside the inputs. If you leave it out, tracehill infers the task from the input and output names, so it's worth writing one.
+</ParamField>
+
+## Naming rules
+
+Input and output names must be valid identifiers, such as `ticket`, `reply_draft` or `score2`. A name can't be both an input and an output. Breaking either rule returns `422`.
+
+## What happens
+
+tracehill writes a prompt from your instructions, input names and output specs, calls the model, and converts each answer to its type. A `choice` always comes back as one of your labels, and a `bool` as a real boolean. If the answer can't be converted, the request fails with a [`502`](/api-reference/errors) and nothing is stored.
+
+## Signature ids
+
+Every response includes a `signature_id`, such as `sig_9f2c41d07a6be315`. It's a hash of the task's shape: the instructions, the input names and the output specs. It doesn't depend on input values.
+
+- Two requests that differ only in `state` values get the **same** id.
+- Changing the instructions, renaming an input, or changing an output spec gives a **new** id.
+
+It's how tracehill groups every run of one task with its feedback, and what it learns against. The [List predictions](/api-reference/list-predictions) endpoint takes it as a filter.
+
+<Tip>
+  Keep instructions and output specs stable for a task you care about. Small wording changes start a new signature id, and tracehill starts learning that task from scratch.
+</Tip>

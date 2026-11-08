@@ -1,0 +1,72 @@
+/* Match tracehill-website: flat, hairline-ruled surfaces on the cool paper background. */
+:root {
+  --th-code-bg: #dde5e8;
+  --th-rule: #b4c0c5;
+  --th-green: #2f6f4e;
+  --th-ink: #1a2327;
+  --th-muted: #5f6c72;
+  --th-string: #8a5a2b;
+}
+html.dark {
+  --th-code-bg: #172125;
+  --th-rule: #2f3b40;
+  --th-green: #6cc497;
+  --th-ink: #e3eaec;
+  --th-muted: #8a979c;
+  --th-string: #d6a46c;
+}
+
+/* Syntax colours for the css-variables code theme, as on the website: green keywords, brown literals. */
+:root,
+html.dark {
+  --mint-foreground: var(--th-ink);
+  --mint-background: transparent;
+  --mint-token-keyword: var(--th-green);
+  --mint-token-string: var(--th-string);
+  --mint-token-string-expression: var(--th-string);
+  --mint-token-constant: var(--th-string);
+  --mint-token-comment: var(--th-muted);
+  --mint-token-function: var(--th-ink);
+  --mint-token-parameter: var(--th-ink);
+  --mint-token-punctuation: var(--th-ink);
+  --mint-token-link: var(--th-green);
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.03em;
+}
+#page-title {
+  font-weight: 500;
+}
+
+/* Code blocks: a tinted panel with a green rule on the left, no card or rounding. */
+.code-block,
+.code-block > div {
+  border-radius: 0 !important;
+}
+.code-block {
+  border: 0 !important;
+  border-left: 2px solid var(--th-green) !important;
+  box-shadow: none !important;
+}
+.code-block > div {
+  background: var(--th-code-bg) !important;
+}
+
+/* API reference request and response panels: the same tinted panel instead of Mintlify's black card. */
+.code-group,
+.code-group .code-block-background {
+  background: var(--th-code-bg) !important;
+  border-radius: 0 !important;
+}
+.code-group {
+  border: 0 !important;
+  border-left: 2px solid var(--th-green) !important;
+  box-shadow: none !important;
+}
+/* Their title bar and copy buttons are drawn for a dark panel; use the muted ink instead. */
+.code-group > div:first-child .text-gray-50,
+.code-group button,
+.code-block button {
+  color: var(--th-muted) !important;
+}

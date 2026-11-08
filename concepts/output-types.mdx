@@ -1,0 +1,105 @@
+---
+title: "Output types"
+description: "Every output is typed. Here is what each type returns."
+---
+
+Each output spec has a `type` and an optional `instructions` string. The `instructions` say what the output should contain, and the model sees them when producing it.
+
+| `type` | Returns | SDK |
+|---|---|---|
+| `text` | string | `th.Text()` |
+| `bool` | `true` / `false` | `th.Bool()` |
+| `number` | float | `th.Number()` |
+| `integer` | integer | `th.Integer()` |
+| `choice` | one of the labels | `th.Choice([...])` |
+| `list` | list of strings | `th.List()` |
+| `json` | object | `th.Json()` |
+
+## text
+
+Free-form text.
+
+<CodeGroup>
+```json JSON
+{"type": "text", "instructions": "Draft a short, friendly reply"}
+```
+```python Python
+th.Text(instructions="Draft a short, friendly reply")
+```
+</CodeGroup>
+
+## bool
+
+A yes/no decision. Phrase the instructions as a question.
+
+<CodeGroup>
+```json JSON
+{"type": "bool", "instructions": "Does the ticket mention a refund?"}
+```
+```python Python
+th.Bool(instructions="Does the ticket mention a refund?")
+```
+</CodeGroup>
+
+## number and integer
+
+A numeric value. Put the expected range or unit in the instructions.
+
+<CodeGroup>
+```json JSON
+{"type": "integer", "instructions": "Severity from 1 (minor) to 5 (outage)"}
+```
+```python Python
+th.Integer(instructions="Severity from 1 (minor) to 5 (outage)")
+```
+</CodeGroup>
+
+## choice
+
+One label from a fixed set. `options` maps each label to an optional description. Described labels are listed for the model, so use descriptions when the labels alone are ambiguous.
+
+<CodeGroup>
+```json JSON
+{
+  "type": "choice",
+  "instructions": "Which team owns this?",
+  "options": {"billing": null, "bug": "a product defect", "other": null}
+}
+```
+```python Python
+th.Choice(["billing", "bug", "other"], instructions="Which team owns this?")
+th.Choice({"billing": None, "bug": "a product defect", "other": None})
+```
+</CodeGroup>
+
+The response is always one of the labels. A choice needs at least one option.
+
+## list
+
+A list of strings.
+
+<CodeGroup>
+```json JSON
+{"type": "list", "instructions": "Products the customer mentions"}
+```
+```python Python
+th.List(instructions="Products the customer mentions")
+```
+</CodeGroup>
+
+## json
+
+A JSON object. Describe the keys you want in the instructions.
+
+<CodeGroup>
+```json JSON
+{"type": "json", "instructions": "Order details with keys order_id and amount"}
+```
+```python Python
+th.Json(instructions="Order details with keys order_id and amount")
+```
+</CodeGroup>
+
+<Note>
+  The SDK also accepts plain dicts, such as `{"type": "text"}`, anywhere it accepts an output spec.
+</Note>

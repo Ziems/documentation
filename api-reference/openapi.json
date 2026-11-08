@@ -1,0 +1,716 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "tracehill",
+    "description": "AI functions that learn from your feedback. Describe a task, get typed outputs, and send feedback to improve it.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/predict": {
+      "post": {
+        "summary": "Run a prediction",
+        "description": "Run a task described by `state`, `outputs` and optional `instructions`, and return typed outputs.\n\nReturns 422 for an invalid task and 502 if the model call or output parsing fails.",
+        "operationId": "predict_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predictions/{id}/feedback": {
+      "post": {
+        "summary": "Add feedback",
+        "description": "Attach feedback to a prediction. At least one of `feedback` and `metric` is required.\n\nA prediction can collect any number of feedback entries.",
+        "operationId": "add_feedback_predictions__id__feedback_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feedback"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predictions/{id}": {
+      "get": {
+        "summary": "Get a prediction",
+        "description": "Return a stored prediction with its request, outputs, model and feedback.",
+        "operationId": "get_prediction_predictions__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prediction"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predictions": {
+      "get": {
+        "summary": "List predictions",
+        "description": "List recent predictions, newest first, each with its feedback. Filter by `signature_id` to get every\nrun of one task. `limit` is capped at 500.",
+        "operationId": "list_predictions_predictions_get",
+        "parameters": [
+          {
+            "name": "signature_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Signature Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Prediction"
+                  },
+                  "title": "Response List Predictions Predictions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BoolOutput": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What this output should contain. The model sees it when producing the output."
+          },
+          "type": {
+            "type": "string",
+            "const": "bool",
+            "title": "Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "BoolOutput"
+      },
+      "ChoiceOutput": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What this output should contain. The model sees it when producing the output."
+          },
+          "type": {
+            "type": "string",
+            "const": "choice",
+            "title": "Type"
+          },
+          "options": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "minProperties": 1,
+            "title": "Options",
+            "description": "Allowed labels, each mapped to an optional description of when to pick it."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "options"
+        ],
+        "title": "ChoiceOutput"
+      },
+      "Feedback": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "feedback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback"
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "feedback",
+          "metric",
+          "created_at"
+        ],
+        "title": "Feedback"
+      },
+      "FeedbackRequest": {
+        "properties": {
+          "feedback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback",
+            "description": "What happened, in natural language."
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric",
+            "description": "A score for the prediction. The scale is up to you; 0\u20131 is a sensible convention."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FeedbackRequest",
+        "examples": [
+          {
+            "feedback": "Reply was too formal",
+            "metric": 0.4
+          }
+        ]
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IntegerOutput": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What this output should contain. The model sees it when producing the output."
+          },
+          "type": {
+            "type": "string",
+            "const": "integer",
+            "title": "Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "IntegerOutput"
+      },
+      "JsonOutput": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What this output should contain. The model sees it when producing the output."
+          },
+          "type": {
+            "type": "string",
+            "const": "json",
+            "title": "Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "JsonOutput"
+      },
+      "ListOutput": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What this output should contain. The model sees it when producing the output."
+          },
+          "type": {
+            "type": "string",
+            "const": "list",
+            "title": "Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "ListOutput"
+      },
+      "NumberOutput": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What this output should contain. The model sees it when producing the output."
+          },
+          "type": {
+            "type": "string",
+            "const": "number",
+            "title": "Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "NumberOutput"
+      },
+      "PredictRequest": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What the task is. Becomes the signature's instructions."
+          },
+          "state": {
+            "title": "State",
+            "description": "The input. An object gives one input field per key; any other JSON value becomes a single `state` input."
+          },
+          "outputs": {
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TextOutput"
+                },
+                {
+                  "$ref": "#/components/schemas/BoolOutput"
+                },
+                {
+                  "$ref": "#/components/schemas/NumberOutput"
+                },
+                {
+                  "$ref": "#/components/schemas/IntegerOutput"
+                },
+                {
+                  "$ref": "#/components/schemas/ChoiceOutput"
+                },
+                {
+                  "$ref": "#/components/schemas/ListOutput"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutput"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "bool": "#/components/schemas/BoolOutput",
+                  "choice": "#/components/schemas/ChoiceOutput",
+                  "integer": "#/components/schemas/IntegerOutput",
+                  "json": "#/components/schemas/JsonOutput",
+                  "list": "#/components/schemas/ListOutput",
+                  "number": "#/components/schemas/NumberOutput",
+                  "text": "#/components/schemas/TextOutput"
+                }
+              }
+            },
+            "type": "object",
+            "minProperties": 1,
+            "title": "Outputs",
+            "description": "The outputs to produce, by field name."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "state",
+          "outputs"
+        ],
+        "title": "PredictRequest",
+        "examples": [
+          {
+            "instructions": "Triage support tickets.",
+            "outputs": {
+              "category": {
+                "instructions": "Which team owns this?",
+                "options": {
+                  "bug": "a product defect"
+                },
+                "type": "choice"
+              },
+              "reply": {
+                "instructions": "Draft a short reply",
+                "type": "text"
+              },
+              "urgent": {
+                "instructions": "Needs a reply today?",
+                "type": "bool"
+              }
+            },
+            "state": {
+              "ticket": "My card was charged twice"
+            }
+          }
+        ]
+      },
+      "PredictResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The prediction's id, used to attach feedback."
+          },
+          "signature_id": {
+            "type": "string",
+            "title": "Signature Id",
+            "description": "Identifies the task's shape; shared by every run of the same task."
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs",
+            "description": "One value per requested output, typed as requested."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "signature_id",
+          "outputs"
+        ],
+        "title": "PredictResponse"
+      },
+      "Prediction": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "signature_id": {
+            "type": "string",
+            "title": "Signature Id"
+          },
+          "request": {
+            "$ref": "#/components/schemas/PredictRequest"
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "feedback": {
+            "items": {
+              "$ref": "#/components/schemas/Feedback"
+            },
+            "type": "array",
+            "title": "Feedback"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "signature_id",
+          "request",
+          "outputs",
+          "model",
+          "created_at",
+          "feedback"
+        ],
+        "title": "Prediction"
+      },
+      "TextOutput": {
+        "properties": {
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions",
+            "description": "What this output should contain. The model sees it when producing the output."
+          },
+          "type": {
+            "type": "string",
+            "const": "text",
+            "title": "Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "TextOutput"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "A tracehill server on this machine"
+    }
+  ]
+}

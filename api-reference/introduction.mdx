@@ -1,0 +1,17 @@
+---
+title: "API reference"
+description: "Four JSON endpoints: predict, add feedback, get and list."
+---
+
+The API is plain JSON over HTTP. Requests never name a model; the API chooses it. Every endpoint is relative to your tracehill API's URL.
+
+| Method | Path | Does |
+|---|---|---|
+| `POST` | `/predict` | Runs a task and returns typed outputs |
+| `POST` | `/predictions/{id}/feedback` | Attaches feedback to a prediction |
+| `GET` | `/predictions/{id}` | Returns a stored prediction with its feedback |
+| `GET` | `/predictions` | Lists recent predictions, optionally for one `signature_id` |
+
+Each endpoint page has a playground. It sends requests to `http://localhost:8000`, so it works when a tracehill server is running on your machine. The OpenAPI schema is also served at `/openapi.json`.
+
+Errors are covered in [Errors](/api-reference/errors).
